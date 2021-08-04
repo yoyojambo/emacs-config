@@ -49,6 +49,11 @@
 (use-package all-the-icons
   :init)
 
+;; Doom-Modeline
+(use-package doom-modeline
+  :ensure t
+  :init (doom-modeline-mode 1))
+
 ;Company Mode
 (use-package company
   :ensure t
@@ -60,6 +65,8 @@
   (:map company-active-map ("<tab>" . company-complete-selection)))
 (setq company-idle-delay 0)
 (setq company-minimum-prefix-length 1)
+
+(global-company-mode 1)
 
 ;Ivy
 (use-package ivy
@@ -83,28 +90,32 @@
          ;; if you want which-key integration
          (lsp-mode . lsp-enable-which-key-integration))
   :commands lsp)
-
-(use-package projectile)
 (use-package lsp-ui)
 (setq lsp-ui-sideline-delay 0)
+
+
+(use-package projectile)
 (use-package flycheck)
 (use-package yasnippet :config (yas-global-mode))
-(use-package java-snippets)
+
+;; Magit
+(use-package magit
+  :bind ("C-x g" . magit-status))
 
 ;; IDE-type Config
 (use-package lsp-ivy :commands lsp-ivy-workspace-symbol)
 (use-package lsp-treemacs :commands lsp-treemacs-errors-list)
 (use-package lsp-java :config (add-hook 'java-mode-hook 'lsp))
-(setq lsp-ui-doc-show-with-cursor nil)
 (use-package dap-mode :after lsp-mode :config (dap-auto-configure-mode))
 (use-package dap-java :ensure nil)
+(use-package java-snippets)
 (use-package lsp-python-ms
   :ensure t
   :init (setq lsp-python-ms-auto-install-server t)
   :hook (python-mode . (lambda ()
                           (require 'lsp-python-ms)
                           (lsp))))
-
+(setq lsp-ui-doc-show-with-cursor nil)
 
 (use-package which-key
   :init (which-key-mode)
@@ -149,7 +160,7 @@
  '(electric-pair-mode t)
  '(fci-rule-color "#3E4451")
  '(package-selected-packages
-   '(lsp-python-ms all-the-icons java-snippets yasnippet projectile flycheck lsp-python lsp-java dap-python dap-java dap-mode lsp-treemacs lsp-ivy lsp-ui lsp-mode company ivy-rich which-key use-package rainbow-delimiters popup javaimp counsel async))
+   '(magit doom-modeline lsp-python-ms all-the-icons java-snippets yasnippet projectile flycheck lsp-python lsp-java dap-python dap-java dap-mode lsp-treemacs lsp-ivy lsp-ui lsp-mode company ivy-rich which-key use-package rainbow-delimiters popup javaimp counsel async))
  '(tetris-x-colors
    [[229 192 123]
     [97 175 239]
