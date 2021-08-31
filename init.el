@@ -14,6 +14,11 @@
 (setq c-default-style
       '((java-mode . "linux")))
 
+;; Only for the laptop
+(setq mouse-wheel-progressive-speed nil)
+(setq mouse-wheel-scroll-amount '(1))
+;; ----------------------------------
+
 (require 'package)
 
 (setq package-archives '(("org" . "https://orgmode.org/elpa/")
@@ -158,7 +163,7 @@
  '(ansi-color-names-vector
    ["#21252B" "#E06C75" "#98C379" "#E5C07B" "#61AFEF" "#C678DD" "#56B6C2" "#ABB2BF"])
  '(custom-safe-themes
-   '("aaceba7dd433b4eed1de887b5c72a53f014237042704a441066e933235a5ab3a" "12db058ce4ba460e067e331a67dbb05c4406d8c0d5e4504cebc059cffae55672" "af9e9a92b17bb6f50d623867e1da6db47e015c30091f325dbe473abe7b397ba4" "a31ca6382a13b79c63f7cfbf535099b73c0496837dc255b7158d3836488739db" "3db307fb06cedec4f2f6dfcbc189ffc26bca9653d7e149643d451b8411a8f039" "0c860c4fe9df8cff6484c54d2ae263f19d935e4ff57019999edbda9c7eda50b8" "ebbd4bbb0f017cb09f7a3b1363b83dfde0c5f4970cda2705419457366cd2de91" default))
+   '("0c860c4fe9df8cff6484c54d2ae263f19d935e4ff57019999edbda9c7eda50b8" "ebbd4bbb0f017cb09f7a3b1363b83dfde0c5f4970cda2705419457366cd2de91" default))
  '(electric-pair-mode t)
  '(fci-rule-color "#3E4451")
  '(package-selected-packages
