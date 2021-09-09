@@ -93,7 +93,9 @@
   :commands lsp)
 (use-package lsp-ui)
 (setq lsp-ui-sideline-delay 0)
-
+;; to fix weird semicolon line deletion issue
+(setq lsp-java-format-on-type-enabled nil)
+(setq lsp-enable-on-type-formatting nil)
 
 (use-package projectile)
 (use-package flycheck)
