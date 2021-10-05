@@ -4,6 +4,7 @@
 (setq visible-bell t)
 (tool-bar-mode -1)
 (menu-bar-mode -1)
+(scroll-bar-mode -1)
 (global-display-line-numbers-mode t)
 (add-to-list 'custom-theme-load-path "~/.emacs.d/themes/")
 (load-theme 'atom-one-dark t)
@@ -13,6 +14,7 @@
 (setq-default cursor-type 'bar)
 (setq c-default-style
       '((java-mode . "linux")))
+(setq mouse-wheel-progressive-speed nil)
 
 (require 'package)
 
@@ -30,6 +32,8 @@
 
 (set-face-attribute 'default nil :font "Fira Code Medium" :height 90)
 ;; (set-face-attribute 'default nil :font "Consolas" :height 90)
+
+(use-package move-dup)
 
 ;Disable line numbers for following modes
 (dolist (mode '(org-mode-hook
@@ -81,6 +85,8 @@
   :init
   (ivy-rich-mode 1))
 
+(use-package counsel-tramp)
+
 ;; LSP-Mode
 (use-package lsp-mode
   :init
@@ -121,22 +127,30 @@
                           (lsp))))
 (setq lsp-ui-doc-show-with-cursor nil)
 
+;Which-key
 (use-package which-key
   :init (which-key-mode)
   :diminish which-key-mode
   :config
   (setq which-key-idle-delay 1.0))
 
-;Key Bindings
+;; Key Bindings
 
-;Window Resize
+;; Move Dup (moving lines like vscode)
+(global-set-key (kbd "M-<up>") 'move-dup-move-lines-up)
+(global-set-key (kbd "M-<down>") 'move-dup-move-lines-down)
+(global-set-key (kbd "C-M-<up>") 'move-dup-duplicate-up)
+(global-set-key (kbd "C-M-<down>") 'move-dup-duplicate-down)
+
+;: Window Resize
 (global-set-key (kbd "S-C-<left>") 'shrink-window-horizontally)
 (global-set-key (kbd "S-C-<right>") 'enlarge-window-horizontally)
 (global-set-key (kbd "S-C-<down>") 'shrink-window)
 (global-set-key (kbd "S-C-<up>") 'enlarge-window)
 
-; Ivy/Counsel/Swiper
+;: Ivy/Counsel/Swiper
 (global-set-key (kbd "C-s") 'swiper-isearch)
+(global-set-key (kbd "C-r") 'swiper-isearch-backward)
 (global-set-key (kbd "M-x") 'counsel-M-x)
 (global-set-key (kbd "C-x C-f") 'counsel-find-file)
 (global-set-key (kbd "M-y") 'counsel-yank-pop)
@@ -164,7 +178,7 @@
  '(electric-pair-mode t)
  '(fci-rule-color "#3E4451")
  '(package-selected-packages
-   '(ssh-agency magit doom-modeline lsp-python-ms all-the-icons java-snippets yasnippet projectile flycheck lsp-python lsp-java dap-python dap-java dap-mode lsp-treemacs lsp-ivy lsp-ui lsp-mode company ivy-rich which-key use-package rainbow-delimiters popup javaimp counsel async))
+   '(move-dup counsel-tramp ssh-agency magit doom-modeline lsp-python-ms all-the-icons java-snippets yasnippet projectile flycheck lsp-python lsp-java dap-python dap-java dap-mode lsp-treemacs lsp-ivy lsp-ui lsp-mode company ivy-rich which-key use-package rainbow-delimiters popup javaimp counsel async))
  '(tetris-x-colors
    [[229 192 123]
     [97 175 239]
