@@ -6,6 +6,7 @@
 (menu-bar-mode -1)
 (scroll-bar-mode -1)
 (global-display-line-numbers-mode t)
+(column-number-mode 1)
 (electric-pair-mode t)
 (show-paren-mode 1)
 (delete-selection-mode 1)
@@ -41,11 +42,19 @@
   ;; Yes, please delete the old version on updates.
   (setq auto-package-update-delete-old-versions t))
 
-(set-face-attribute 'default nil :font "Fira Code Medium" :height 90)
-;; (set-face-attribute 'default nil :font "Consolas" :height 90)
+;; Font
+;(set-face-attribute 'default nil :font "Fira Code" :height 90)
+(set-face-attribute 'default nil :family "JetBrains Mono" :height 90)
 
 ;; Package for usint M-up and M-down to move lines around
 (use-package move-dup)
+
+;; Nim config
+(use-package nim-mode
+  :config
+  (progn (define-key nim-mode-map (kbd "C-c C-c") nil)
+          (define-key nim-mode-map (kbd "C-c <") nil)
+	  (define-key nim-mode-map (kbd "C-c >") nil)))
 
 ;; Rust config
 (use-package rust-mode)
@@ -53,17 +62,41 @@
 (setq lsp-rust-analyzer-server-display-inlay-hints t)
 (setq lsp-rust-server 'rust-analyzer)
 
-;Disable line numbers for following modes
+;; Disable line numbers for following modes
 (dolist (mode '(org-mode-hook
 		term-mode-hook
 		eshell-mode-hook
-		shell-mode-hook))
+		shell-mode-hook
+		dired-mode-hook))
   (add-hook mode (lambda () (display-line-numbers-mode 0))))
+
+;; Disable company-mode in terminals
+(dolist (mode '(shell-mode-hook
+		term-mode-hook
+		eshell-mode-hook))
+  (add-hook mode (lambda () (company-mode 0))))
+
+;; Eshell prompt colors
+(defun my-eshell-prompt ()
+  "Highlight eshell pwd and prompt separately."
+  (mapconcat
+   (lambda (list)
+     (propertize (car list)
+                 'read-only      t
+                 'font-lock-face (cdr list)
+                 'front-sticky   '(font-lock-face read-only)
+                 'rear-nonsticky '(font-lock-face read-only)))
+   `((,(abbreviate-file-name (eshell/pwd)) :foreground "dodger blue")
+     (,(if (zerop (user-uid)) " # " " $ ") :foreground "orchid"))
+   ""))
+
+(setq eshell-highlight-prompt nil
+      eshell-prompt-function  #'my-eshell-prompt)
 
 ;; Expand region (C +)
 (use-package expand-region)
 
-;;Rainbow Delimiters
+;; Rainbow Delimiters
 (use-package rainbow-delimiters
   :ensure t
   :init
@@ -79,13 +112,15 @@
   :ensure t
   :init (doom-modeline-mode 1))
 
-;Company Mode
+;; Company Mode
 (use-package company
   :ensure t
   :init
   (setq company-show-numbers t)       ; visual numbering of candidates
   :config
-  (add-hook 'after-init-hook 'global-company-mode)
+  (progn (add-hook 'after-init-hook 'global-company-mode))
+  ;; (define-key company-mode-map [return] nil)
+  ;; (define-key company-mode-map "\r" nil)
   :bind
   (:map company-active-map ("<tab>" . company-complete-selection)))
 (setq company-idle-delay 0)
@@ -95,7 +130,7 @@
 (global-company-mode 1)
 (company-quickhelp-mode)
 
-;Ivy
+;; Ivy
 (use-package ivy
   :diminish
   :config
@@ -141,6 +176,7 @@
 (use-package lsp-ivy :commands lsp-ivy-workspace-symbol)
 (use-package lsp-treemacs :commands lsp-treemacs-errors-list)
 (use-package lsp-java :config (add-hook 'java-mode-hook 'lsp))
+(use-package nim-mode :config (add-hook 'nim-mode-hook 'lsp))
 (use-package dap-mode :after lsp-mode :config (dap-auto-configure-mode))
 (use-package dap-java :ensure nil)
 (use-package java-snippets)
@@ -153,6 +189,10 @@
 (setq lsp-ui-doc-show-with-cursor nil)
 (setq treemacs-python-executable "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\Python37_64\\python.exe")
 
+;; fic-mode for highlighting of TODO comments
+(use-package fic-mode)
+(add-hook 'nim-mode-hook 'turn-on-fic-mode)
+
 ;Which-key
 (use-package which-key
   :init (which-key-mode)
@@ -161,6 +201,10 @@
   (setq which-key-idle-delay 1.0))
 
 ;; Key Bindings
+
+;; Comment Region
+(global-set-key (kbd "C-c C-c") 'comment-or-uncomment-region)
+
 
 ;; Move Dup (moving lines like vscode)
 (global-set-key (kbd "M-<up>") 'move-dup-move-lines-up)
@@ -223,7 +267,7 @@
  '(hl-sexp-background-color "#1c1f26")
  '(magit-diff-use-overlays nil)
  '(package-selected-packages
-   '(expand-region atom-dark-theme auto-package-update rust-mode move-dup counsel-tramp ssh-agency magit doom-modeline lsp-python-ms all-the-icons java-snippets yasnippet projectile flycheck lsp-python lsp-java dap-python dap-java dap-mode lsp-treemacs lsp-ivy lsp-ui lsp-mode company ivy-rich which-key use-package rainbow-delimiters popup javaimp counsel async))
+   '(fic-mode arduino-cli-mode company-arduino arduino-mode magit-todos nim-mode expand-region atom-dark-theme auto-package-update rust-mode move-dup counsel-tramp ssh-agency magit doom-modeline lsp-python-ms all-the-icons java-snippets yasnippet projectile flycheck lsp-python lsp-java dap-python dap-java dap-mode lsp-treemacs lsp-ivy lsp-ui lsp-mode company ivy-rich which-key use-package rainbow-delimiters popup javaimp counsel async))
  '(pos-tip-background-color "#E6DB74")
  '(pos-tip-foreground-color "#242728")
  '(tetris-x-colors
