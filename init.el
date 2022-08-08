@@ -17,6 +17,13 @@
 (setq mouse-wheel-progressive-speed nil)
 
 (set-default-coding-systems 'utf-8)
+(setq-default c-basic-offset 4)
+
+;; To make backups (file.extension~) not clutter every directory.
+(setq backup-directory-alist
+          `((".*" . ,temporary-file-directory)))
+    (setq auto-save-file-name-transforms
+          `((".*" ,temporary-file-directory t)))
 
 (require 'package)
 
@@ -32,8 +39,14 @@
 (require 'use-package)
 (setq use-package-always-ensure t)
 
+(use-package doom-themes
+  :config
+  ;; Global settings
+  (setq doom-themes-enable-bold t
+	doom-themes-enable-italic t))
+
 (add-to-list 'custom-theme-load-path "~/.emacs.d/themes/")
-(load-theme 'atom-one-dark t)
+(load-theme 'doom-one t)
 
 ;; Taken from -> https://tsdh.org/posts/2021-06-06-update-all-emacs-packages-from-the-command-line.html
 (use-package auto-package-update
@@ -43,8 +56,8 @@
   (setq auto-package-update-delete-old-versions t))
 
 ;; Font
-;(set-face-attribute 'default nil :font "Fira Code" :height 90)
-(set-face-attribute 'default nil :family "JetBrains Mono" :height 90)
+(set-face-attribute 'default nil :font "Fira Code" :height 90)
+;; (set-face-attribute 'default nil :family "Fira Code" :height 90)
 
 ;; Package for usint M-up and M-down to move lines around
 (use-package move-dup)
@@ -118,9 +131,10 @@
   :init
   (setq company-show-numbers t)       ; visual numbering of candidates
   :config
-  (progn (add-hook 'after-init-hook 'global-company-mode))
-  ;; (define-key company-mode-map [return] nil)
-  ;; (define-key company-mode-map "\r" nil)
+  (progn (add-hook 'after-init-hook 'global-company-mode)
+	 ;; These two are so that hitting return will never select a completion.
+	 (define-key company-active-map (kbd "<return>") nil)
+	 (define-key company-active-map (kbd "RET") nil))
   :bind
   (:map company-active-map ("<tab>" . company-complete-selection)))
 (setq company-idle-delay 0)
@@ -145,6 +159,8 @@
 (use-package counsel-tramp)
 
 ;; LSP-Mode
+;; WARNING: Never add values to 'lsp-enabled-clients', rather add undesired clients to 'lsp-disabled-clients'.
+;; any clients not found in 'lsp-enabled-clients' will show an error message when trying to load them.
 (use-package lsp-mode
   :init
   ;; set prefix for lsp-command-keymap (few alternatives - "C-l", "C-c l")
@@ -155,21 +171,32 @@
          (lsp-mode . lsp-enable-which-key-integration))
   :commands lsp
   :config
-  (lsp-treemacs-sync-mode 1))
+  (lsp-treemacs-sync-mode 1)
+  (defun lsp--clean-company ()
+    (remove-hook 'company-completion-started-hook
+		 (lambda (&rest _)
+                   (lsp--capf-clear-cache)
+                   (setq-local lsp-inhibit-lsp-hooks t))
+		 t)
+    (remove-hook 'company-after-completion-hook
+		 (lambda (&rest _)
+                   (lsp--capf-clear-cache)
+                   (setq-local lsp-inhibit-lsp-hooks nil))
+		 t)))
 (use-package lsp-ui)
 (setq lsp-ui-sideline-delay 0)
-;; to fix weird semicolon line deletion issue
-(setq lsp-java-format-on-type-enabled nil)
+(setq lsp-java-format-on-type-enabled nil) ;; to fix weird semicolon line deletion issue
 (setq lsp-enable-on-type-formatting nil)
 ;;(setq lsp-ui-sideline-show-code-actions t)
 
 (use-package projectile)
 (use-package flycheck :ensure)
-(use-package yasnippet :config (yas-global-mode))
+(use-package yasnippet :config (yas-global-mode t))
 
 ;; Magit
 (use-package magit
   :bind ("C-x g" . magit-status))
+
 (use-package ssh-agency)
 
 ;; IDE-type Config
@@ -180,18 +207,19 @@
 (use-package dap-mode :after lsp-mode :config (dap-auto-configure-mode))
 (use-package dap-java :ensure nil)
 (use-package java-snippets)
-(use-package lsp-python-ms
-  :ensure t
-  :init (setq lsp-python-ms-auto-install-server t)
-  :hook (python-mode . (lambda ()
-                          (require 'lsp-python-ms)
-                          (lsp))))
+;; (use-package lsp-python-ms
+;;   :ensure t
+;;   :init (setq lsp-python-ms-auto-install-server t)
+;;   :hook (python-mode . (lambda ()
+;;                           (require 'lsp-python-ms)
+;;                           (lsp))))
+(use-package lsp-jedi
+  :ensure t)
 (setq lsp-ui-doc-show-with-cursor nil)
-(setq treemacs-python-executable "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\Python37_64\\python.exe")
 
 ;; fic-mode for highlighting of TODO comments
 (use-package fic-mode)
-(add-hook 'nim-mode-hook 'turn-on-fic-mode)
+(add-hook 'nim-mode-hook 'fic-mode)
 
 ;Which-key
 (use-package which-key
@@ -200,11 +228,22 @@
   :config
   (setq which-key-idle-delay 1.0))
 
+
 ;; Key Bindings
+
+;; Newline without breaking current line
+;;  1. move to end of the line.
+;;  2. insert newline with index
+(defun newline-without-break-of-line ()
+  (interactive)
+  (let ((oldpos (point)))
+    (end-of-line)
+    (newline-and-indent)))
+
+(global-set-key (kbd "<C-return>") 'newline-without-break-of-line)
 
 ;; Comment Region
 (global-set-key (kbd "C-c C-c") 'comment-or-uncomment-region)
-
 
 ;; Move Dup (moving lines like vscode)
 (global-set-key (kbd "M-<up>") 'move-dup-move-lines-up)
@@ -251,7 +290,7 @@
  '(company-quickhelp-color-foreground "#ABB2BF")
  '(compilation-message-face 'default)
  '(custom-safe-themes
-   '("5b7c31eb904d50c470ce264318f41b3bbc85545e4359e6b7d48ee88a892b1915" "3e5c1261d06395a74566da3af413ab909a2049e0c52d9297a5e2d6823bf189d6" "44546a3c5032ace263613f39669a66c604523001135f5b42ea583c9abf6f0a5e" "493434ed95de30b7648c293fc482c0bb3e3ba95543bdd936d89490da0ef5ebd5" "6c12baea488aa868d32ee648fd5a704a351dd4d8689da6e21459200d386eaab1" "7affd7ecac23d6f5f43f115d2ce3f9a95f1d65c2da6cedddeae53ecf1b7470f3" "3bea339b9d83c48cddd1080494bc4971b7a85a78c51545fcf1429e7838f8b918" "aaceba7dd433b4eed1de887b5c72a53f014237042704a441066e933235a5ab3a" "12db058ce4ba460e067e331a67dbb05c4406d8c0d5e4504cebc059cffae55672" "af9e9a92b17bb6f50d623867e1da6db47e015c30091f325dbe473abe7b397ba4" "a31ca6382a13b79c63f7cfbf535099b73c0496837dc255b7158d3836488739db" "3db307fb06cedec4f2f6dfcbc189ffc26bca9653d7e149643d451b8411a8f039" "0c860c4fe9df8cff6484c54d2ae263f19d935e4ff57019999edbda9c7eda50b8" "ebbd4bbb0f017cb09f7a3b1363b83dfde0c5f4970cda2705419457366cd2de91" default))
+   '("eca44f32ae038d7a50ce9c00693b8986f4ab625d5f2b4485e20f22c47f2634ae" "02f57ef0a20b7f61adce51445b68b2a7e832648ce2e7efb19d217b6454c1b644" "5b7c31eb904d50c470ce264318f41b3bbc85545e4359e6b7d48ee88a892b1915" "3e5c1261d06395a74566da3af413ab909a2049e0c52d9297a5e2d6823bf189d6" "44546a3c5032ace263613f39669a66c604523001135f5b42ea583c9abf6f0a5e" "493434ed95de30b7648c293fc482c0bb3e3ba95543bdd936d89490da0ef5ebd5" "6c12baea488aa868d32ee648fd5a704a351dd4d8689da6e21459200d386eaab1" "7affd7ecac23d6f5f43f115d2ce3f9a95f1d65c2da6cedddeae53ecf1b7470f3" "3bea339b9d83c48cddd1080494bc4971b7a85a78c51545fcf1429e7838f8b918" "aaceba7dd433b4eed1de887b5c72a53f014237042704a441066e933235a5ab3a" "12db058ce4ba460e067e331a67dbb05c4406d8c0d5e4504cebc059cffae55672" "af9e9a92b17bb6f50d623867e1da6db47e015c30091f325dbe473abe7b397ba4" "a31ca6382a13b79c63f7cfbf535099b73c0496837dc255b7158d3836488739db" "3db307fb06cedec4f2f6dfcbc189ffc26bca9653d7e149643d451b8411a8f039" "0c860c4fe9df8cff6484c54d2ae263f19d935e4ff57019999edbda9c7eda50b8" "ebbd4bbb0f017cb09f7a3b1363b83dfde0c5f4970cda2705419457366cd2de91" default))
  '(electric-pair-mode t)
  '(fci-rule-color "#3E4451")
  '(highlight-changes-colors '("#ff8eff" "#ab7eff"))
@@ -265,9 +304,12 @@
      ("#F309DF" . 85)
      ("#323342" . 100)))
  '(hl-sexp-background-color "#1c1f26")
+ '(lsp-clangd-binary-path "/usr/bin/clang")
+ '(lsp-clangd-version "14.0.0")
+ '(lsp-clients-clangd-executable "/usr/bin/clangd")
  '(magit-diff-use-overlays nil)
  '(package-selected-packages
-   '(fic-mode arduino-cli-mode company-arduino arduino-mode magit-todos nim-mode expand-region atom-dark-theme auto-package-update rust-mode move-dup counsel-tramp ssh-agency magit doom-modeline lsp-python-ms all-the-icons java-snippets yasnippet projectile flycheck lsp-python lsp-java dap-python dap-java dap-mode lsp-treemacs lsp-ivy lsp-ui lsp-mode company ivy-rich which-key use-package rainbow-delimiters popup javaimp counsel async))
+   '(lsp-jedi key-assist fic-mode arduino-cli-mode company-arduino arduino-mode magit-todos nim-mode expand-region atom-dark-theme auto-package-update rust-mode move-dup counsel-tramp ssh-agency magit doom-modeline lsp-python-ms all-the-icons java-snippets yasnippet projectile flycheck lsp-python lsp-java dap-python dap-java dap-mode lsp-treemacs lsp-ivy lsp-ui lsp-mode company ivy-rich which-key use-package rainbow-delimiters popup javaimp counsel async))
  '(pos-tip-background-color "#E6DB74")
  '(pos-tip-foreground-color "#242728")
  '(tetris-x-colors
@@ -299,6 +341,7 @@
      (340 . "#2790C3")
      (360 . "#06d8ff")))
  '(vc-annotate-very-old-color nil)
+ '(warning-suppress-types '((comp)))
  '(weechat-color-list
    (unspecified "#242728" "#323342" "#F70057" "#ff0066" "#86C30D" "#63de5d" "#BEB244" "#E6DB74" "#40CAE4" "#06d8ff" "#FF61FF" "#ff8eff" "#00b2ac" "#53f2dc" "#f8fbfc" "#ffffff")))
 (custom-set-faces
