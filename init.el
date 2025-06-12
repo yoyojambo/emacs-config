@@ -17,16 +17,16 @@
 (setq-default cursor-type 'bar)
 
 (setq c-default-style
-      '((java-mode . "linux")))
+      '((java-mode . "java")))
 (setq mouse-wheel-progressive-speed nil)
 
 (set-default-coding-systems 'utf-8)
 
 ;; To make backups (file.extension~) not clutter every directory.
 (setq backup-directory-alist
-          `((".*" . ,temporary-file-directory)))
-    (setq auto-save-file-name-transforms
-          `((".*" ,temporary-file-directory t)))
+      `((".*" . ,temporary-file-directory)))
+(setq auto-save-file-name-transforms
+      `((".*" ,temporary-file-directory t)))
 
 (require 'package)
 
@@ -70,7 +70,7 @@
   (setq auto-package-update-delete-old-versions t))
 
 ;; Font
-(set-face-attribute 'default nil :font "Fira Code" :height 90)
+(set-face-attribute 'default nil :font "Cascadia Code NF" :height 110)
 
 ;; Ligatures TRADICIONAL
 (use-package ligature
@@ -179,7 +179,7 @@
      (css "https://github.com/tree-sitter/tree-sitter-css")
      (cpp "https://github.com/tree-sitter/tree-sitter-cpp")
      (elisp "https://github.com/Wilfred/tree-sitter-elisp")
-     (go "https://github.com/tree-sitter/tree-sitter-go")
+     (go "https://github.com/tree-sitter/tree-sitter-go" "v0.19.1")
      (html "https://github.com/tree-sitter/tree-sitter-html")
      (javascript "https://github.com/tree-sitter/tree-sitter-javascript" "master" "src")
      (json "https://github.com/tree-sitter/tree-sitter-json")
@@ -199,15 +199,7 @@
 
 ;; Nim config
 (use-package nim-mode
-  :mode "\\.nim\\'"
-
-  :config
-  ;(add-to-list 'eglot-server-programs '(nim-mode "nimlsp"))
-  ;; :config
-  ;; (progn (define-key nim-mode-map (kbd "C-c C-c") nil)
-  ;;         (define-key nim-mode-map (kbd "C-c <") nil)
-  ;; 	  (define-key nim-mode-map (kbd "C-c >") nil))
-  )
+  :magic ("%NIM" . nim-mode))
 
 ;; Rust config
 ;; (use-package rust-mode
@@ -219,13 +211,29 @@
 ;;   (setq lsp-rust-server 'rust-analyzer)
 ;; )
 
+;; Go config
+(add-hook 'go-mode-hook
+	  (lambda ()
+	    (setq tab-width 4)
+	    (setq compile-command "go run ")
+	    ;;(setq godef-command "~/go/bin/godef")
+	    (local-set-key (kbd "C-c C-c") 'compile)))
+
 ;; Plantuml-mode
 (use-package plantuml-mode
   :mode "\\.puml\\'"
   :config (setq plantuml-default-exec-mode 'jar))
 
 ;; Org mode
-(add-hook 'org-mode-hook (lambda () (org-indent-mode)))
+(add-hook 'org-mode-hook
+	  (lambda ()
+	    (org-indent-mode)
+	    (setq org-html-validation-link nil)
+	    (setq org-export-with-section-numbers nil)
+	    (setq org-export-with-timestamps nil)
+	    (setq org-html-preamble nil)
+	    (setq org-image-actual-width nil)))
+
 
 ;; PDF-tools
 ;; (use-package pdf-tools
@@ -248,16 +256,21 @@
 (use-package org-modern
   :hook (org-mode . org-modern-mode))
 
+(use-package vterm
+    :ensure t)
+
 ;; Disable line numbers for following modes
 (dolist
     (mode-hook
      '(org-mode-hook
        term-mode-hook
+       vterm-mode-hook
        eshell-mode-hook
        shell-mode-hook
        dired-mode-hook
        image-mode-hook
-       pdf-view-mode-hook))
+       pdf-view-mode-hook
+       help-mode-hook))
   (add-hook mode-hook (lambda () (display-line-numbers-mode 0))))
 
 ;; Eshell prompt colors
@@ -277,6 +290,26 @@
 (setq eshell-highlight-prompt nil
       eshell-prompt-function  #'my-eshell-prompt)
 
+;; vterm instead of shell for project-compile
+(defun my-project-shell ()
+  "Start an inferior shell in the current project's root directory.
+If a buffer already exists for running a shell in the project's root,
+switch to it.  Otherwise, create a new shell buffer.
+With \\[universal-argument] prefix arg, create a new inferior shell buffer even
+if one already exists."
+  (interactive)
+  (require 'comint)
+  (let* ((default-directory (project-root (project-current t)))
+         (default-project-shell-name (project-prefixed-buffer-name "shell"))
+         (shell-buffer (get-buffer default-project-shell-name)))
+    (if (and shell-buffer (not current-prefix-arg))
+        (if (comint-check-proc shell-buffer)
+            (pop-to-buffer shell-buffer (bound-and-true-p display-comint-buffer-action))
+          (vterm shell-buffer))
+      (vterm (generate-new-buffer-name default-project-shell-name)))))
+
+(advice-add 'project-shell :override #'my-project-shell)
+
 ;; Expand region (C-+)
 (use-package expand-region)
 
@@ -287,9 +320,9 @@
   (progn
     (add-hook 'prog-mode-hook 'rainbow-delimiters-mode)))
 
-;; All-the-icons
-(use-package all-the-icons
-  :init)
+;; ;; All-the-icons
+;; (use-package all-the-icons
+;;   :init)
 
 ;; Doom-Modeline
 (use-package doom-modeline
@@ -333,18 +366,18 @@
 ;; Ivy
 (use-package ivy
   :diminish
-  :config
+  :init
   (ivy-mode 1)
   :custom
   (ivy-use-virtual-buffers t)
   (ivy-count-format "(%d/%d) " "Sets the format around the option counter in ivy, counsel, swiper.")  
-)
+  )
 
 (use-package ivy-rich
   :init
   (ivy-rich-mode 1))
 
-;; (use-package counsel-tramp)
+(use-package counsel-tramp)
 
 ;; nerd-icons
 (use-package nerd-icons)
@@ -358,9 +391,16 @@
   :init
   (nerd-icons-ivy-rich-mode 1))
 
-(use-package nerd-icons-completion
-  :config
-  (nerd-icons-completion-mode))
+(use-package ivy-posframe
+  :ensure t
+  :config (ivy-posframe-mode 1)
+  :custom (ivy-posframe-height-alist '((swiper . 20)
+									   (t      . 40)))
+  )
+
+;; (use-package nerd-icons-completion
+;;   :config
+;;   (nerd-icons-completion-mode))
 
 ;; LSP-Mode
 (use-package lsp-mode
@@ -397,6 +437,18 @@
 ;; (setq lsp-enable-on-type-formatting nil)
 ;; ;;(setq lsp-ui-sideline-show-code-actions t)
 
+
+;; web-mode
+(use-package web-mode
+  :defer t
+  :ensure t)
+
+;; Eglot
+; Faster IO with a wrapper around the interaction with LSPs
+(use-package eglot-booster
+	:after eglot
+	:config	(eglot-booster-mode))
+
 (use-package projectile)
 (use-package flycheck :ensure)
 (use-package flycheck-nim)
@@ -411,14 +463,19 @@
 ;;   (yas-reload-all)
 ;;   )
 
-(yas-global-mode 1)
-
 (use-package yasnippet
   :hook (prog-mode . yas-minor-mode)
   :config
-  (global-set-key (kbd "<M-return>") 'yas-expand)
+  ;(global-set-key (kbd "<M-return>") 'yas-expand) ;; Made optional so org mode works
   ;(yas-reload-all)
-)
+  )
+
+(yas-global-mode 1)
+
+(defun mine/activate-yas-expand ()
+  "Sets locally the M-return key to 'yas-expand'"
+  (interactive)
+  (local-set-key (kbd "<M-return>") 'yas-expand))
 
 (use-package yasnippet-snippets
   :after (yasnippet))
@@ -526,84 +583,85 @@
  '(compilation-message-face 'default)
  '(connection-local-criteria-alist
    '(((:application eshell)
-      eshell-connection-default-profile)
-     ((:application tramp)
-      tramp-connection-local-default-system-profile tramp-connection-local-default-shell-profile)))
+	  eshell-connection-default-profile)
+	 ((:application tramp)
+	  tramp-connection-local-default-system-profile tramp-connection-local-default-shell-profile)))
  '(connection-local-profile-alist
    '((eshell-connection-default-profile
-      (eshell-path-env-list))
-     (tramp-connection-local-darwin-ps-profile
-      (tramp-process-attributes-ps-args "-acxww" "-o" "pid,uid,user,gid,comm=abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ" "-o" "state=abcde" "-o" "ppid,pgid,sess,tty,tpgid,minflt,majflt,time,pri,nice,vsz,rss,etime,pcpu,pmem,args")
-      (tramp-process-attributes-ps-format
-       (pid . number)
-       (euid . number)
-       (user . string)
-       (egid . number)
-       (comm . 52)
-       (state . 5)
-       (ppid . number)
-       (pgrp . number)
-       (sess . number)
-       (ttname . string)
-       (tpgid . number)
-       (minflt . number)
-       (majflt . number)
-       (time . tramp-ps-time)
-       (pri . number)
-       (nice . number)
-       (vsize . number)
-       (rss . number)
-       (etime . tramp-ps-time)
-       (pcpu . number)
-       (pmem . number)
-       (args)))
-     (tramp-connection-local-busybox-ps-profile
-      (tramp-process-attributes-ps-args "-o" "pid,user,group,comm=abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ" "-o" "stat=abcde" "-o" "ppid,pgid,tty,time,nice,etime,args")
-      (tramp-process-attributes-ps-format
-       (pid . number)
-       (user . string)
-       (group . string)
-       (comm . 52)
-       (state . 5)
-       (ppid . number)
-       (pgrp . number)
-       (ttname . string)
-       (time . tramp-ps-time)
-       (nice . number)
-       (etime . tramp-ps-time)
-       (args)))
-     (tramp-connection-local-bsd-ps-profile
-      (tramp-process-attributes-ps-args "-acxww" "-o" "pid,euid,user,egid,egroup,comm=abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ" "-o" "state,ppid,pgid,sid,tty,tpgid,minflt,majflt,time,pri,nice,vsz,rss,etimes,pcpu,pmem,args")
-      (tramp-process-attributes-ps-format
-       (pid . number)
-       (euid . number)
-       (user . string)
-       (egid . number)
-       (group . string)
-       (comm . 52)
-       (state . string)
-       (ppid . number)
-       (pgrp . number)
-       (sess . number)
-       (ttname . string)
-       (tpgid . number)
-       (minflt . number)
-       (majflt . number)
-       (time . tramp-ps-time)
-       (pri . number)
-       (nice . number)
-       (vsize . number)
-       (rss . number)
-       (etime . number)
-       (pcpu . number)
-       (pmem . number)
-       (args)))
-     (tramp-connection-local-default-shell-profile
-      (shell-file-name . "/bin/sh")
-      (shell-command-switch . "-c"))
-     (tramp-connection-local-default-system-profile
-      (path-separator . ":")
-      (null-device . "/dev/null"))))
+	  (eshell-path-env-list))
+	 (tramp-connection-local-darwin-ps-profile
+	  (tramp-process-attributes-ps-args "-acxww" "-o" "pid,uid,user,gid,comm=abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ" "-o" "state=abcde" "-o" "ppid,pgid,sess,tty,tpgid,minflt,majflt,time,pri,nice,vsz,rss,etime,pcpu,pmem,args")
+	  (tramp-process-attributes-ps-format
+	   (pid . number)
+	   (euid . number)
+	   (user . string)
+	   (egid . number)
+	   (comm . 52)
+	   (state . 5)
+	   (ppid . number)
+	   (pgrp . number)
+	   (sess . number)
+	   (ttname . string)
+	   (tpgid . number)
+	   (minflt . number)
+	   (majflt . number)
+	   (time . tramp-ps-time)
+	   (pri . number)
+	   (nice . number)
+	   (vsize . number)
+	   (rss . number)
+	   (etime . tramp-ps-time)
+	   (pcpu . number)
+	   (pmem . number)
+	   (args)))
+	 (tramp-connection-local-busybox-ps-profile
+	  (tramp-process-attributes-ps-args "-o" "pid,user,group,comm=abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ" "-o" "stat=abcde" "-o" "ppid,pgid,tty,time,nice,etime,args")
+	  (tramp-process-attributes-ps-format
+	   (pid . number)
+	   (user . string)
+	   (group . string)
+	   (comm . 52)
+	   (state . 5)
+	   (ppid . number)
+	   (pgrp . number)
+	   (ttname . string)
+	   (time . tramp-ps-time)
+	   (nice . number)
+	   (etime . tramp-ps-time)
+	   (args)))
+	 (tramp-connection-local-bsd-ps-profile
+	  (tramp-process-attributes-ps-args "-acxww" "-o" "pid,euid,user,egid,egroup,comm=abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ" "-o" "state,ppid,pgid,sid,tty,tpgid,minflt,majflt,time,pri,nice,vsz,rss,etimes,pcpu,pmem,args")
+	  (tramp-process-attributes-ps-format
+	   (pid . number)
+	   (euid . number)
+	   (user . string)
+	   (egid . number)
+	   (group . string)
+	   (comm . 52)
+	   (state . string)
+	   (ppid . number)
+	   (pgrp . number)
+	   (sess . number)
+	   (ttname . string)
+	   (tpgid . number)
+	   (minflt . number)
+	   (majflt . number)
+	   (time . tramp-ps-time)
+	   (pri . number)
+	   (nice . number)
+	   (vsize . number)
+	   (rss . number)
+	   (etime . number)
+	   (pcpu . number)
+	   (pmem . number)
+	   (args)))
+	 (tramp-connection-local-default-shell-profile
+	  (shell-file-name . "/bin/sh")
+	  (shell-command-switch . "-c"))
+	 (tramp-connection-local-default-system-profile
+	  (path-separator . ":")
+	  (null-device . "/dev/null"))))
+ '(create-lockfiles nil)
  '(custom-safe-themes
    '("eca44f32ae038d7a50ce9c00693b8986f4ab625d5f2b4485e20f22c47f2634ae" "02f57ef0a20b7f61adce51445b68b2a7e832648ce2e7efb19d217b6454c1b644" "5b7c31eb904d50c470ce264318f41b3bbc85545e4359e6b7d48ee88a892b1915" "3e5c1261d06395a74566da3af413ab909a2049e0c52d9297a5e2d6823bf189d6" "44546a3c5032ace263613f39669a66c604523001135f5b42ea583c9abf6f0a5e" "493434ed95de30b7648c293fc482c0bb3e3ba95543bdd936d89490da0ef5ebd5" "6c12baea488aa868d32ee648fd5a704a351dd4d8689da6e21459200d386eaab1" "7affd7ecac23d6f5f43f115d2ce3f9a95f1d65c2da6cedddeae53ecf1b7470f3" "3bea339b9d83c48cddd1080494bc4971b7a85a78c51545fcf1429e7838f8b918" "aaceba7dd433b4eed1de887b5c72a53f014237042704a441066e933235a5ab3a" "12db058ce4ba460e067e331a67dbb05c4406d8c0d5e4504cebc059cffae55672" "af9e9a92b17bb6f50d623867e1da6db47e015c30091f325dbe473abe7b397ba4" "a31ca6382a13b79c63f7cfbf535099b73c0496837dc255b7158d3836488739db" "3db307fb06cedec4f2f6dfcbc189ffc26bca9653d7e149643d451b8411a8f039" "0c860c4fe9df8cff6484c54d2ae263f19d935e4ff57019999edbda9c7eda50b8" "ebbd4bbb0f017cb09f7a3b1363b83dfde0c5f4970cda2705419457366cd2de91" default))
  '(doc-view-continuous t)
@@ -613,54 +671,74 @@
  '(highlight-changes-colors '("#ff8eff" "#ab7eff"))
  '(highlight-tail-colors
    '(("#323342" . 0)
-     ("#63de5d" . 20)
-     ("#4BBEAE" . 30)
-     ("#1DB4D0" . 50)
-     ("#9A8F21" . 60)
-     ("#A75B00" . 70)
-     ("#F309DF" . 85)
-     ("#323342" . 100)))
+	 ("#63de5d" . 20)
+	 ("#4BBEAE" . 30)
+	 ("#1DB4D0" . 50)
+	 ("#9A8F21" . 60)
+	 ("#A75B00" . 70)
+	 ("#F309DF" . 85)
+	 ("#323342" . 100)))
  '(hl-sexp-background-color "#1c1f26")
  '(lsp-clangd-binary-path "/usr/bin/clang")
  '(lsp-clangd-version "14.0.0")
  '(lsp-clients-clangd-executable "/usr/bin/clangd")
  '(magit-diff-use-overlays nil)
- '(org-agenda-files '("/home/yoyojambo/OneDrive/Agenda.org" "~/Personal.org"))
+ '(magit-log-auto-more t)
+ '(org-agenda-files '("/home/yoyojambo/Personal.org"))
+ '(org-babel-load-languages '((emacs-lisp . t) (python . t) (sql . t) (plantuml . t)))
  '(org-export-backends '(ascii html icalendar latex odt org))
+ '(org-plantuml-jar-path "~/plantuml.jar")
  '(org-special-ctrl-a/e t)
  '(org-support-shift-select t)
  '(package-selected-packages
-   '(consult counsel-spotify zzz-to-char flycheck-eglot treemacs-magit treemacs-nerd-icons eglot company-box flycheck-nim fira-code-mode ligature pdf-tools nerd-icons-dired nerd-icons-ivy-rich ess poly-R ess-R-data-view flycheck-plantuml plantuml-mode treemacs-projectile treemacs-all-the-icons treemacs-icons-dired bongo flycheck-google-cpplint google-c-style matlab-mode lsp-jedi key-assist fic-mode arduino-cli-mode company-arduino arduino-mode magit-todos nim-mode expand-region atom-dark-theme auto-package-update rust-mode move-dup counsel-tramp ssh-agency magit doom-modeline lsp-python-ms all-the-icons java-snippets yasnippet projectile flycheck lsp-python lsp-java dap-python dap-java dap-mode lsp-treemacs lsp-ivy lsp-ui lsp-mode company ivy-rich which-key use-package rainbow-delimiters popup javaimp counsel async))
+   '(web-mode eglot vterm dockerfile-mode eglot-java chatgpt-shell eglot-booster kotlin-mode go-mode haskell-mode csv-mode ivy nodejs-repl ob-nim d-mode consult counsel-spotify zzz-to-char flycheck-eglot treemacs-magit treemacs-nerd-icons company-box flycheck-nim fira-code-mode ligature pdf-tools nerd-icons-dired nerd-icons-ivy-rich ess poly-R ess-R-data-view flycheck-plantuml plantuml-mode treemacs-projectile treemacs-all-the-icons treemacs-icons-dired bongo flycheck-google-cpplint google-c-style matlab-mode lsp-jedi key-assist fic-mode arduino-cli-mode company-arduino arduino-mode magit-todos nim-mode expand-region atom-dark-theme auto-package-update rust-mode move-dup counsel-tramp ssh-agency magit doom-modeline lsp-python-ms all-the-icons java-snippets yasnippet projectile flycheck lsp-python lsp-java dap-python dap-java dap-mode lsp-treemacs lsp-ivy lsp-ui lsp-mode company ivy-rich which-key use-package rainbow-delimiters popup javaimp counsel async))
+ '(package-vc-selected-packages
+   '((eglot-booster :vc-backend Git :url "https://github.com/jdtsmith/eglot-booster")))
  '(pos-tip-background-color "#E6DB74")
  '(pos-tip-foreground-color "#242728")
+ '(sql-connection-alist
+   '(("BDD_dashboard_ClsscModls"
+	  (sql-product 'mysql)
+	  (sql-user "avnadmin")
+	  (sql-server "mysql-2de6cd26-tec-47e8.a.aivencloud.com")
+	  (sql-database "classicmodels")
+	  (sql-port 23453))
+	 ("PROD_SorteosTec"
+	  (sql-product 'mysql)
+	  (sql-user "avnadmin")
+	  (sql-server "mysql-2de6cd26-tec-47e8.a.aivencloud.com")
+	  (sql-database "defaultdb")
+	  (sql-port 23453))))
+ '(sql-mysql-login-params '(user password server database port))
+ '(tab-width 4)
  '(tetris-x-colors
    [[229 192 123]
-    [97 175 239]
-    [209 154 102]
-    [224 108 117]
-    [152 195 121]
-    [198 120 221]
-    [86 182 194]])
+	[97 175 239]
+	[209 154 102]
+	[224 108 117]
+	[152 195 121]
+	[198 120 221]
+	[86 182 194]])
  '(vc-annotate-background nil)
  '(vc-annotate-color-map
    '((20 . "#ff0066")
-     (40 . "#CF4F1F")
-     (60 . "#C26C0F")
-     (80 . "#E6DB74")
-     (100 . "#AB8C00")
-     (120 . "#A18F00")
-     (140 . "#989200")
-     (160 . "#8E9500")
-     (180 . "#63de5d")
-     (200 . "#729A1E")
-     (220 . "#609C3C")
-     (240 . "#4E9D5B")
-     (260 . "#3C9F79")
-     (280 . "#53f2dc")
-     (300 . "#299BA6")
-     (320 . "#2896B5")
-     (340 . "#2790C3")
-     (360 . "#06d8ff")))
+	 (40 . "#CF4F1F")
+	 (60 . "#C26C0F")
+	 (80 . "#E6DB74")
+	 (100 . "#AB8C00")
+	 (120 . "#A18F00")
+	 (140 . "#989200")
+	 (160 . "#8E9500")
+	 (180 . "#63de5d")
+	 (200 . "#729A1E")
+	 (220 . "#609C3C")
+	 (240 . "#4E9D5B")
+	 (260 . "#3C9F79")
+	 (280 . "#53f2dc")
+	 (300 . "#299BA6")
+	 (320 . "#2896B5")
+	 (340 . "#2790C3")
+	 (360 . "#06d8ff")))
  '(vc-annotate-very-old-color nil)
  '(warning-suppress-types '((comp)))
  '(weechat-color-list
@@ -678,3 +756,4 @@
  '(hi-yellow ((t (:background "#ECBE7B" :foreground "black")))))
 (put 'upcase-region 'disabled nil)
 (put 'dired-find-alternate-file 'disabled nil)
+(put 'downcase-region 'disabled nil)
