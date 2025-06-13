@@ -134,43 +134,7 @@
                           ;; The few not covered by the regexps.
                           "{|"  "[|"  "]#"  "(*"  "}#"  "$>"  "^=")))
 
-;; (use-package ligature
-;;   :config
-;;   (ligature-set-ligatures 'prog-mode '("|||>" "<|||" "<==>" "<!--" "####" "~~>" "***" "||=" "||>"
-;;                                        ":::" "::=" "=:=" "===" "==>" "=!=" "=>>" "=<<" "=/=" "!=="
-;;                                        "!!." ">=>" ">>=" ">>>" ">>-" ">->" "->>" "-->" "---" "-<<"
-;;                                        "<~~" "<~>" "<*>" "<||" "<|>" "<$>" "<==" "<=>" "<=<" "<->"
-;;                                        "<--" "<-<" "<<=" "<<-" "<<<" "<+>" "</>" "###" "#_(" "..<"
-;;                                        "..." "+++" "/==" "///" "_|_" "&&" "^=" "~~" "~@" "~=" ; "www" eliminated
-;;                                        "~>" "~-" "**" "*>" "*/" "||" "|}" "|]" "|=" "|>" "|-" "{|"
-;;                                        "[|" "]#" "::" ":=" ":>" ":<" "$>" "==" "=>" "!=" "!!" ">:"
-;;                                        ">=" ">>" ">-" "-~" "-|" "->" "--" "-<" "<~" "<*" "<|" "<:"
-;;                                        "<$" "<=" "<>" "<-" "<<" "<+" "</" "#{" "#[" "#:" "#=" "#!"
-;;                                        "##" "#(" "#?" "#_" "%%" ".=" ".-" ".." ".?" "+>" "++" "?:"
-;;                                        "?=" "?." "??" ";;" "/*" "/=" "/>" "//" "__" "~~" "(*" "*)"
-;;                                        "\\\\" "://" "!~" "::>" "<::" "#####" "######" "----")))
-
 (global-ligature-mode 1)
-
-;; No se necesita gracias a ligature.el
-;; ;; fira-code-mode
-;; (use-package fira-code-mode
-;;   :config (global-fira-code-mode))
-
-;; Original ligature set from https://github.com/mickeynp/ligature.el#readme
-;; '("|||>" "<|||" "<==>" "<!--" "####" "~~>" "***" "||=" "||>"
-;;   ":::" "::=" "=:=" "===" "==>" "=!=" "=>>" "=<<" "=/=" "!=="
-;;   "!!." ">=>" ">>=" ">>>" ">>-" ">->" "->>" "-->" "---" "-<<"
-;;   "<~~" "<~>" "<*>" "<||" "<|>" "<$>" "<==" "<=>" "<=<" "<->"
-;;   "<--" "<-<" "<<=" "<<-" "<<<" "<+>" "</>" "###" "#_(" "..<"
-;;   "..." "+++" "/==" "///" "_|_" "www" "&&" "^=" "~~" "~@" "~="
-;;   "~>" "~-" "**" "*>" "*/" "||" "|}" "|]" "|=" "|>" "|-" "{|"
-;;   "[|" "]#" "::" ":=" ":>" ":<" "$>" "==" "=>" "!=" "!!" ">:"
-;;   ">=" ">>" ">-" "-~" "-|" "->" "--" "-<" "<~" "<*" "<|" "<:"
-;;   "<$" "<=" "<>" "<-" "<<" "<+" "</" "#{" "#[" "#:" "#=" "#!"
-;;   "##" "#(" "#?" "#_" "%%" ".=" ".-" ".." ".?" "+>" "++" "?:"
-;;   "?=" "?." "??" ";;" "/*" "/=" "/>" "//" "__" "~~" "(*" "*)"
-;;   "\\\\" "://")
 
 ;; Tree-sitter
 (setq treesit-language-source-alist
@@ -201,16 +165,6 @@
 (use-package nim-mode
   :magic ("%NIM" . nim-mode))
 
-;; Rust config
-;; (use-package rust-mode
-;;   :mode )
-;; (use-package rustic
-;;   :mode "\\.rs\\'"
-;;   :config
-;;   (setq lsp-rust-analyzer-server-display-inlay-hints t)
-;;   (setq lsp-rust-server 'rust-analyzer)
-;; )
-
 ;; Go config
 (add-hook 'go-mode-hook
 	  (lambda ()
@@ -233,16 +187,6 @@
 	    (setq org-export-with-timestamps nil)
 	    (setq org-html-preamble nil)
 	    (setq org-image-actual-width nil)))
-
-
-;; PDF-tools
-;; (use-package pdf-tools
-;;   :pin manual
-;;   :mode ("\\.pdf\\'")
-;;   :config
-;;   (pdf-tools-install)
-;;   (setq-default pdf-view-display-size 'fit-height)
-;;   (define-key pdf-view-mode-map (kbd "C-s") 'isearch-forward))
 
 ;; https://github.com/jwiegley/use-package#magic-handlers
 (use-package pdf-tools
@@ -320,10 +264,6 @@ if one already exists."
   (progn
     (add-hook 'prog-mode-hook 'rainbow-delimiters-mode)))
 
-;; ;; All-the-icons
-;; (use-package all-the-icons
-;;   :init)
-
 ;; Doom-Modeline
 (use-package doom-modeline
   :ensure t
@@ -348,10 +288,6 @@ if one already exists."
   )
 
 (use-package company-quickhelp)
-
-;; With use-package:
-;; (use-package company-box
-;;   :hook (company-mode . company-box-mode))
 
 (global-company-mode 1)
 (company-quickhelp-mode)
@@ -397,10 +333,6 @@ if one already exists."
   :custom (ivy-posframe-height-alist '((swiper . 20)
 									   (t      . 40)))
   )
-
-;; (use-package nerd-icons-completion
-;;   :config
-;;   (nerd-icons-completion-mode))
 
 ;; LSP-Mode
 (use-package lsp-mode
