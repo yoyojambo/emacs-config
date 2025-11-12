@@ -153,7 +153,11 @@
      (toml "https://github.com/tree-sitter/tree-sitter-toml")
      (tsx "https://github.com/tree-sitter/tree-sitter-typescript" "master" "tsx/src")
      (typescript "https://github.com/tree-sitter/tree-sitter-typescript" "master" "typescript/src")
-     (yaml "https://github.com/ikatyang/tree-sitter-yaml")))
+     (yaml "https://github.com/ikatyang/tree-sitter-yaml")
+	 (astro "https://github.com/virchau13/tree-sitter-astro")))
+
+(use-package astro-ts-mode
+  :mode "\\.astro\\'")
 
 (use-package google-c-style
   :hook (c++-mode . google-set-c-style))
@@ -187,6 +191,21 @@
 	    (setq org-export-with-timestamps nil)
 	    (setq org-html-preamble nil)
 	    (setq org-image-actual-width nil)))
+
+;; thanks, ChatGpt
+(defun yoyojambo/org-latex-needspace-setup ()
+  "Configure Org LaTeX export to insert \\needspace before headings.
+Ensures the needspace package is loaded and modifies headline export."
+  (interactive)
+  ;; Add the package to the export preamble
+  (add-to-list 'org-latex-packages-alist '("" "needspace"))
+  ;; Override headline formatting
+  (setq-local org-latex-format-headline-function
+              (lambda (todo todo-type priority text tags info)
+                (concat "\\needspace{5\\baselineskip}\n"
+                        (org-latex-format-headline-default-function
+                         todo todo-type priority text tags info))))
+  (message "Org LaTeX needspace setup enabled for this buffer."))
 
 ;; https://github.com/jwiegley/use-package#magic-handlers
 (use-package pdf-tools
@@ -385,6 +404,22 @@ if one already exists."
 (use-package flycheck :ensure)
 (use-package flycheck-nim)
 
+(use-package copilot
+  :ensure t
+  :bind (:map copilot-completion-map
+              ("TAB" . copilot-accept-completion)
+              ("<tab>" . copilot-accept-completion))
+  :config
+  ;; custom function to integrate copilot with normal tab behavior
+  (defun my/copilot-tab ()
+    (interactive)
+    (or (copilot-accept-completion)
+        (indent-for-tab-command)))
+
+  ;; globally bind tab in prog-mode buffers
+  (define-key copilot-mode-map (kbd "TAB") #'my/copilot-tab)
+  (define-key copilot-mode-map (kbd "<tab>") #'my/copilot-tab))
+
 ;; (use-package yasnippet
 ;;   :ensure t
 ;;   :config
@@ -499,6 +534,13 @@ if one already exists."
 ;: Expand Region
 (global-set-key (kbd "C-=") 'er/expand-region)
 
+;; To re-display Org-mode images
+(run-with-timer nil 1
+ (lambda ()
+   (when (and (eq major-mode 'org-mode)
+              (derived-mode-p 'org-mode))
+     (org-redisplay-inline-images))))
+
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
@@ -508,107 +550,115 @@ if one already exists."
  '(ansi-color-faces-vector
    [default default default italic underline success warning error])
  '(ansi-color-names-vector
-   ["#21252B" "#E06C75" "#98C379" "#E5C07B" "#61AFEF" "#C678DD" "#56B6C2" "#ABB2BF"])
+   ["#21252B" "#E06C75" "#98C379" "#E5C07B" "#61AFEF" "#C678DD" "#56B6C2"
+	"#ABB2BF"])
  '(company-box-frame-behavior 'point)
  '(company-quickhelp-color-background "#3E4452")
  '(company-quickhelp-color-foreground "#ABB2BF")
  '(compilation-message-face 'default)
  '(connection-local-criteria-alist
-   '(((:application eshell)
-	  eshell-connection-default-profile)
+   '(((:application eshell) eshell-connection-default-profile)
 	 ((:application tramp)
-	  tramp-connection-local-default-system-profile tramp-connection-local-default-shell-profile)))
+	  tramp-connection-local-default-system-profile
+	  tramp-connection-local-default-shell-profile)))
  '(connection-local-profile-alist
-   '((eshell-connection-default-profile
-	  (eshell-path-env-list))
+   '((eshell-connection-default-profile (eshell-path-env-list))
 	 (tramp-connection-local-darwin-ps-profile
-	  (tramp-process-attributes-ps-args "-acxww" "-o" "pid,uid,user,gid,comm=abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ" "-o" "state=abcde" "-o" "ppid,pgid,sess,tty,tpgid,minflt,majflt,time,pri,nice,vsz,rss,etime,pcpu,pmem,args")
-	  (tramp-process-attributes-ps-format
-	   (pid . number)
-	   (euid . number)
-	   (user . string)
-	   (egid . number)
-	   (comm . 52)
-	   (state . 5)
-	   (ppid . number)
-	   (pgrp . number)
-	   (sess . number)
-	   (ttname . string)
-	   (tpgid . number)
-	   (minflt . number)
-	   (majflt . number)
-	   (time . tramp-ps-time)
-	   (pri . number)
-	   (nice . number)
-	   (vsize . number)
-	   (rss . number)
-	   (etime . tramp-ps-time)
-	   (pcpu . number)
-	   (pmem . number)
-	   (args)))
+	  (tramp-process-attributes-ps-args "-acxww" "-o"
+										"pid,uid,user,gid,comm=abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+										"-o" "state=abcde" "-o"
+										"ppid,pgid,sess,tty,tpgid,minflt,majflt,time,pri,nice,vsz,rss,etime,pcpu,pmem,args")
+	  (tramp-process-attributes-ps-format (pid . number)
+										  (euid . number)
+										  (user . string)
+										  (egid . number) (comm . 52)
+										  (state . 5) (ppid . number)
+										  (pgrp . number)
+										  (sess . number)
+										  (ttname . string)
+										  (tpgid . number)
+										  (minflt . number)
+										  (majflt . number)
+										  (time . tramp-ps-time)
+										  (pri . number)
+										  (nice . number)
+										  (vsize . number)
+										  (rss . number)
+										  (etime . tramp-ps-time)
+										  (pcpu . number)
+										  (pmem . number) (args)))
 	 (tramp-connection-local-busybox-ps-profile
-	  (tramp-process-attributes-ps-args "-o" "pid,user,group,comm=abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ" "-o" "stat=abcde" "-o" "ppid,pgid,tty,time,nice,etime,args")
-	  (tramp-process-attributes-ps-format
-	   (pid . number)
-	   (user . string)
-	   (group . string)
-	   (comm . 52)
-	   (state . 5)
-	   (ppid . number)
-	   (pgrp . number)
-	   (ttname . string)
-	   (time . tramp-ps-time)
-	   (nice . number)
-	   (etime . tramp-ps-time)
-	   (args)))
+	  (tramp-process-attributes-ps-args "-o"
+										"pid,user,group,comm=abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+										"-o" "stat=abcde" "-o"
+										"ppid,pgid,tty,time,nice,etime,args")
+	  (tramp-process-attributes-ps-format (pid . number)
+										  (user . string)
+										  (group . string) (comm . 52)
+										  (state . 5) (ppid . number)
+										  (pgrp . number)
+										  (ttname . string)
+										  (time . tramp-ps-time)
+										  (nice . number)
+										  (etime . tramp-ps-time)
+										  (args)))
 	 (tramp-connection-local-bsd-ps-profile
-	  (tramp-process-attributes-ps-args "-acxww" "-o" "pid,euid,user,egid,egroup,comm=abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ" "-o" "state,ppid,pgid,sid,tty,tpgid,minflt,majflt,time,pri,nice,vsz,rss,etimes,pcpu,pmem,args")
-	  (tramp-process-attributes-ps-format
-	   (pid . number)
-	   (euid . number)
-	   (user . string)
-	   (egid . number)
-	   (group . string)
-	   (comm . 52)
-	   (state . string)
-	   (ppid . number)
-	   (pgrp . number)
-	   (sess . number)
-	   (ttname . string)
-	   (tpgid . number)
-	   (minflt . number)
-	   (majflt . number)
-	   (time . tramp-ps-time)
-	   (pri . number)
-	   (nice . number)
-	   (vsize . number)
-	   (rss . number)
-	   (etime . number)
-	   (pcpu . number)
-	   (pmem . number)
-	   (args)))
+	  (tramp-process-attributes-ps-args "-acxww" "-o"
+										"pid,euid,user,egid,egroup,comm=abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+										"-o"
+										"state,ppid,pgid,sid,tty,tpgid,minflt,majflt,time,pri,nice,vsz,rss,etimes,pcpu,pmem,args")
+	  (tramp-process-attributes-ps-format (pid . number)
+										  (euid . number)
+										  (user . string)
+										  (egid . number)
+										  (group . string) (comm . 52)
+										  (state . string)
+										  (ppid . number)
+										  (pgrp . number)
+										  (sess . number)
+										  (ttname . string)
+										  (tpgid . number)
+										  (minflt . number)
+										  (majflt . number)
+										  (time . tramp-ps-time)
+										  (pri . number)
+										  (nice . number)
+										  (vsize . number)
+										  (rss . number)
+										  (etime . number)
+										  (pcpu . number)
+										  (pmem . number) (args)))
 	 (tramp-connection-local-default-shell-profile
-	  (shell-file-name . "/bin/sh")
-	  (shell-command-switch . "-c"))
+	  (shell-file-name . "/bin/sh") (shell-command-switch . "-c"))
 	 (tramp-connection-local-default-system-profile
-	  (path-separator . ":")
-	  (null-device . "/dev/null"))))
+	  (path-separator . ":") (null-device . "/dev/null"))))
  '(create-lockfiles nil)
  '(custom-safe-themes
-   '("eca44f32ae038d7a50ce9c00693b8986f4ab625d5f2b4485e20f22c47f2634ae" "02f57ef0a20b7f61adce51445b68b2a7e832648ce2e7efb19d217b6454c1b644" "5b7c31eb904d50c470ce264318f41b3bbc85545e4359e6b7d48ee88a892b1915" "3e5c1261d06395a74566da3af413ab909a2049e0c52d9297a5e2d6823bf189d6" "44546a3c5032ace263613f39669a66c604523001135f5b42ea583c9abf6f0a5e" "493434ed95de30b7648c293fc482c0bb3e3ba95543bdd936d89490da0ef5ebd5" "6c12baea488aa868d32ee648fd5a704a351dd4d8689da6e21459200d386eaab1" "7affd7ecac23d6f5f43f115d2ce3f9a95f1d65c2da6cedddeae53ecf1b7470f3" "3bea339b9d83c48cddd1080494bc4971b7a85a78c51545fcf1429e7838f8b918" "aaceba7dd433b4eed1de887b5c72a53f014237042704a441066e933235a5ab3a" "12db058ce4ba460e067e331a67dbb05c4406d8c0d5e4504cebc059cffae55672" "af9e9a92b17bb6f50d623867e1da6db47e015c30091f325dbe473abe7b397ba4" "a31ca6382a13b79c63f7cfbf535099b73c0496837dc255b7158d3836488739db" "3db307fb06cedec4f2f6dfcbc189ffc26bca9653d7e149643d451b8411a8f039" "0c860c4fe9df8cff6484c54d2ae263f19d935e4ff57019999edbda9c7eda50b8" "ebbd4bbb0f017cb09f7a3b1363b83dfde0c5f4970cda2705419457366cd2de91" default))
+   '("eca44f32ae038d7a50ce9c00693b8986f4ab625d5f2b4485e20f22c47f2634ae"
+	 "02f57ef0a20b7f61adce51445b68b2a7e832648ce2e7efb19d217b6454c1b644"
+	 "5b7c31eb904d50c470ce264318f41b3bbc85545e4359e6b7d48ee88a892b1915"
+	 "3e5c1261d06395a74566da3af413ab909a2049e0c52d9297a5e2d6823bf189d6"
+	 "44546a3c5032ace263613f39669a66c604523001135f5b42ea583c9abf6f0a5e"
+	 "493434ed95de30b7648c293fc482c0bb3e3ba95543bdd936d89490da0ef5ebd5"
+	 "6c12baea488aa868d32ee648fd5a704a351dd4d8689da6e21459200d386eaab1"
+	 "7affd7ecac23d6f5f43f115d2ce3f9a95f1d65c2da6cedddeae53ecf1b7470f3"
+	 "3bea339b9d83c48cddd1080494bc4971b7a85a78c51545fcf1429e7838f8b918"
+	 "aaceba7dd433b4eed1de887b5c72a53f014237042704a441066e933235a5ab3a"
+	 "12db058ce4ba460e067e331a67dbb05c4406d8c0d5e4504cebc059cffae55672"
+	 "af9e9a92b17bb6f50d623867e1da6db47e015c30091f325dbe473abe7b397ba4"
+	 "a31ca6382a13b79c63f7cfbf535099b73c0496837dc255b7158d3836488739db"
+	 "3db307fb06cedec4f2f6dfcbc189ffc26bca9653d7e149643d451b8411a8f039"
+	 "0c860c4fe9df8cff6484c54d2ae263f19d935e4ff57019999edbda9c7eda50b8"
+	 "ebbd4bbb0f017cb09f7a3b1363b83dfde0c5f4970cda2705419457366cd2de91"
+	 default))
  '(doc-view-continuous t)
  '(doom-modeline-time-icon nil)
  '(electric-pair-mode t)
  '(fci-rule-color "#3E4451")
  '(highlight-changes-colors '("#ff8eff" "#ab7eff"))
  '(highlight-tail-colors
-   '(("#323342" . 0)
-	 ("#63de5d" . 20)
-	 ("#4BBEAE" . 30)
-	 ("#1DB4D0" . 50)
-	 ("#9A8F21" . 60)
-	 ("#A75B00" . 70)
-	 ("#F309DF" . 85)
+   '(("#323342" . 0) ("#63de5d" . 20) ("#4BBEAE" . 30) ("#1DB4D0" . 50)
+	 ("#9A8F21" . 60) ("#A75B00" . 70) ("#F309DF" . 85)
 	 ("#323342" . 100)))
  '(hl-sexp-background-color "#1c1f26")
  '(lsp-clangd-binary-path "/usr/bin/clang")
@@ -616,65 +666,69 @@ if one already exists."
  '(lsp-clients-clangd-executable "/usr/bin/clangd")
  '(magit-diff-use-overlays nil)
  '(magit-log-auto-more t)
- '(org-agenda-files '("/home/yoyojambo/Personal.org"))
- '(org-babel-load-languages '((emacs-lisp . t) (python . t) (sql . t) (plantuml . t)))
- '(org-export-backends '(ascii html icalendar latex odt org))
+ '(org-agenda-files nil)
+ '(org-babel-load-languages
+   '((emacs-lisp . t) (python . t) (sql . t) (plantuml . t) (R . t)))
+ '(org-confirm-babel-evaluate nil)
+ '(org-export-backends '(ascii beamer html icalendar latex md odt org))
+ '(org-export-with-section-numbers nil)
+ '(org-export-with-timestamps nil)
+ '(org-image-actual-width nil)
+ '(org-latex-image-default-width ".6\\linewidth")
+ '(org-latex-src-block-backend 'listings)
+ '(org-list-allow-alphabetical t)
  '(org-plantuml-jar-path "~/plantuml.jar")
  '(org-special-ctrl-a/e t)
  '(org-support-shift-select t)
  '(package-selected-packages
-   '(web-mode eglot vterm dockerfile-mode eglot-java chatgpt-shell eglot-booster kotlin-mode go-mode haskell-mode csv-mode ivy nodejs-repl ob-nim d-mode consult counsel-spotify zzz-to-char flycheck-eglot treemacs-magit treemacs-nerd-icons company-box flycheck-nim fira-code-mode ligature pdf-tools nerd-icons-dired nerd-icons-ivy-rich ess poly-R ess-R-data-view flycheck-plantuml plantuml-mode treemacs-projectile treemacs-all-the-icons treemacs-icons-dired bongo flycheck-google-cpplint google-c-style matlab-mode lsp-jedi key-assist fic-mode arduino-cli-mode company-arduino arduino-mode magit-todos nim-mode expand-region atom-dark-theme auto-package-update rust-mode move-dup counsel-tramp ssh-agency magit doom-modeline lsp-python-ms all-the-icons java-snippets yasnippet projectile flycheck lsp-python lsp-java dap-python dap-java dap-mode lsp-treemacs lsp-ivy lsp-ui lsp-mode company ivy-rich which-key use-package rainbow-delimiters popup javaimp counsel async))
+   '(all-the-icons arduino-cli-mode arduino-mode astro-ts-mode async
+				   atom-dark-theme auto-package-update bongo
+				   chatgpt-shell company company-arduino company-box
+				   consult copilot counsel counsel-spotify
+				   counsel-tramp csv-mode d-mode dap-java dap-mode
+				   dap-python dockerfile-mode doom-modeline eglot
+				   eglot-booster eglot-java ess ess-R-data-view
+				   expand-region fic-mode fira-code-mode flycheck
+				   flycheck-eglot flycheck-google-cpplint flycheck-nim
+				   flycheck-plantuml go-mode google-c-style
+				   haskell-mode ivy ivy-rich java-snippets javaimp
+				   key-assist kotlin-mode leetcode ligature lsp-ivy
+				   lsp-java lsp-jedi lsp-mode lsp-python lsp-python-ms
+				   lsp-treemacs lsp-ui magit magit-todos matlab-mode
+				   move-dup nerd-icons-dired nerd-icons-ivy-rich
+				   nim-mode nodejs-repl ob-nim org-web-tools pdf-tools
+				   plantuml-mode poly-R popup projectile
+				   rainbow-delimiters rust-mode ssh-agency
+				   treemacs-all-the-icons treemacs-icons-dired
+				   treemacs-magit treemacs-nerd-icons
+				   treemacs-projectile use-package vterm web-mode
+				   which-key yasnippet zzz-to-char))
  '(package-vc-selected-packages
-   '((eglot-booster :vc-backend Git :url "https://github.com/jdtsmith/eglot-booster")))
+   '((eglot-booster :vc-backend Git :url
+					"https://github.com/jdtsmith/eglot-booster")))
  '(pos-tip-background-color "#E6DB74")
  '(pos-tip-foreground-color "#242728")
- '(sql-connection-alist
-   '(("BDD_dashboard_ClsscModls"
-	  (sql-product 'mysql)
-	  (sql-user "avnadmin")
-	  (sql-server "mysql-2de6cd26-tec-47e8.a.aivencloud.com")
-	  (sql-database "classicmodels")
-	  (sql-port 23453))
-	 ("PROD_SorteosTec"
-	  (sql-product 'mysql)
-	  (sql-user "avnadmin")
-	  (sql-server "mysql-2de6cd26-tec-47e8.a.aivencloud.com")
-	  (sql-database "defaultdb")
-	  (sql-port 23453))))
  '(sql-mysql-login-params '(user password server database port))
  '(tab-width 4)
  '(tetris-x-colors
-   [[229 192 123]
-	[97 175 239]
-	[209 154 102]
-	[224 108 117]
-	[152 195 121]
-	[198 120 221]
-	[86 182 194]])
+   [[229 192 123] [97 175 239] [209 154 102] [224 108 117] [152 195 121]
+	[198 120 221] [86 182 194]])
  '(vc-annotate-background nil)
  '(vc-annotate-color-map
-   '((20 . "#ff0066")
-	 (40 . "#CF4F1F")
-	 (60 . "#C26C0F")
-	 (80 . "#E6DB74")
-	 (100 . "#AB8C00")
-	 (120 . "#A18F00")
-	 (140 . "#989200")
-	 (160 . "#8E9500")
-	 (180 . "#63de5d")
-	 (200 . "#729A1E")
-	 (220 . "#609C3C")
-	 (240 . "#4E9D5B")
-	 (260 . "#3C9F79")
-	 (280 . "#53f2dc")
-	 (300 . "#299BA6")
-	 (320 . "#2896B5")
-	 (340 . "#2790C3")
-	 (360 . "#06d8ff")))
+   '((20 . "#ff0066") (40 . "#CF4F1F") (60 . "#C26C0F") (80 . "#E6DB74")
+	 (100 . "#AB8C00") (120 . "#A18F00") (140 . "#989200")
+	 (160 . "#8E9500") (180 . "#63de5d") (200 . "#729A1E")
+	 (220 . "#609C3C") (240 . "#4E9D5B") (260 . "#3C9F79")
+	 (280 . "#53f2dc") (300 . "#299BA6") (320 . "#2896B5")
+	 (340 . "#2790C3") (360 . "#06d8ff")))
  '(vc-annotate-very-old-color nil)
+ '(warning-display-at-bottom nil)
  '(warning-suppress-types '((comp)))
  '(weechat-color-list
-   (unspecified "#242728" "#323342" "#F70057" "#ff0066" "#86C30D" "#63de5d" "#BEB244" "#E6DB74" "#40CAE4" "#06d8ff" "#FF61FF" "#ff8eff" "#00b2ac" "#53f2dc" "#f8fbfc" "#ffffff")))
+   (unspecified "#242728" "#323342" "#F70057" "#ff0066" "#86C30D"
+				"#63de5d" "#BEB244" "#E6DB74" "#40CAE4" "#06d8ff"
+				"#FF61FF" "#ff8eff" "#00b2ac" "#53f2dc" "#f8fbfc"
+				"#ffffff")))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
