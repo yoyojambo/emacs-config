@@ -137,13 +137,15 @@
 (global-ligature-mode 1)
 
 ;; Tree-sitter
+(require 'treesit)
 (setq treesit-language-source-alist
    '((bash "https://github.com/tree-sitter/tree-sitter-bash")
      (cmake "https://github.com/uyha/tree-sitter-cmake")
      (css "https://github.com/tree-sitter/tree-sitter-css")
      (cpp "https://github.com/tree-sitter/tree-sitter-cpp")
      (elisp "https://github.com/Wilfred/tree-sitter-elisp")
-     (go "https://github.com/tree-sitter/tree-sitter-go" "v0.19.1")
+     (go "https://github.com/tree-sitter/tree-sitter-go" "v0.25.0") ;; go treesitter changed from method_spec to method_elem, and that broke templ's treesitter... keep in mind
+	 (templ "https://github.com/vrischmann/tree-sitter-templ")
      (html "https://github.com/tree-sitter/tree-sitter-html")
      (javascript "https://github.com/tree-sitter/tree-sitter-javascript" "master" "src")
      (json "https://github.com/tree-sitter/tree-sitter-json")
@@ -154,7 +156,8 @@
      (tsx "https://github.com/tree-sitter/tree-sitter-typescript" "master" "tsx/src")
      (typescript "https://github.com/tree-sitter/tree-sitter-typescript" "master" "typescript/src")
      (yaml "https://github.com/ikatyang/tree-sitter-yaml")
-	 (astro "https://github.com/virchau13/tree-sitter-astro")))
+	 (astro "https://github.com/virchau13/tree-sitter-astro")
+	 ))
 
 (use-package astro-ts-mode
   :mode "\\.astro\\'")
@@ -170,12 +173,12 @@
   :magic ("%NIM" . nim-mode))
 
 ;; Go config
+(use-package go-ts-mode
+  :mode "\\.go\\'")
+
 (add-hook 'go-mode-hook
 	  (lambda ()
-	    (setq tab-width 4)
-	    (setq compile-command "go run ")
-	    ;;(setq godef-command "~/go/bin/godef")
-	    (local-set-key (kbd "C-c C-c") 'compile)))
+	    (setq tab-width 4)))
 
 ;; Plantuml-mode
 (use-package plantuml-mode
@@ -397,8 +400,8 @@ if one already exists."
 ;; Eglot
 ; Faster IO with a wrapper around the interaction with LSPs
 (use-package eglot-booster
-	:after eglot
-	:config	(eglot-booster-mode))
+  :after eglot
+  :config (eglot-booster-mode))
 
 (use-package projectile)
 (use-package flycheck :ensure)
@@ -655,6 +658,7 @@ if one already exists."
  '(doom-modeline-time-icon nil)
  '(electric-pair-mode t)
  '(fci-rule-color "#3E4451")
+ '(go-ts-mode-indent-offset 4)
  '(highlight-changes-colors '("#ff8eff" "#ab7eff"))
  '(highlight-tail-colors
    '(("#323342" . 0) ("#63de5d" . 20) ("#4BBEAE" . 30) ("#1DB4D0" . 50)
@@ -681,28 +685,16 @@ if one already exists."
  '(org-special-ctrl-a/e t)
  '(org-support-shift-select t)
  '(package-selected-packages
-   '(all-the-icons arduino-cli-mode arduino-mode astro-ts-mode async
-				   atom-dark-theme auto-package-update bongo
-				   chatgpt-shell company company-arduino company-box
-				   consult copilot counsel counsel-spotify
-				   counsel-tramp csv-mode d-mode dap-java dap-mode
-				   dap-python dockerfile-mode doom-modeline eglot
-				   eglot-booster eglot-java ess ess-R-data-view
-				   expand-region fic-mode fira-code-mode flycheck
-				   flycheck-eglot flycheck-google-cpplint flycheck-nim
-				   flycheck-plantuml go-mode google-c-style
-				   haskell-mode ivy ivy-rich java-snippets javaimp
-				   key-assist kotlin-mode leetcode ligature lsp-ivy
-				   lsp-java lsp-jedi lsp-mode lsp-python lsp-python-ms
-				   lsp-treemacs lsp-ui magit magit-todos matlab-mode
+   '(astro-ts-mode auto-package-update chatgpt-shell company-quickhelp
+				   copilot counsel-tramp dockerfile-mode doom-modeline
+				   doom-themes eglot-booster eglot-java ess
+				   expand-region flycheck-nim go-mode google-c-style
+				   ivy-posframe leetcode ligature lsp-ui magit
 				   move-dup nerd-icons-dired nerd-icons-ivy-rich
-				   nim-mode nodejs-repl ob-nim org-web-tools pdf-tools
-				   plantuml-mode poly-R popup projectile
-				   rainbow-delimiters rust-mode ssh-agency
-				   treemacs-all-the-icons treemacs-icons-dired
-				   treemacs-magit treemacs-nerd-icons
-				   treemacs-projectile use-package vterm web-mode
-				   which-key yasnippet zzz-to-char))
+				   nim-mode org-modern org-web-tools pdf-tools
+				   plantuml-mode projectile rainbow-delimiters
+				   ssh-agency templ-ts-mode vterm web-mode which-key
+				   yasnippet-snippets))
  '(package-vc-selected-packages
    '((eglot-booster :vc-backend Git :url
 					"https://github.com/jdtsmith/eglot-booster")))
