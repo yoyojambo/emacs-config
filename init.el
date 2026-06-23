@@ -363,23 +363,6 @@ Ensures the needspace package is loaded and modifies headline export."
        help-mode-hook))
   (add-hook mode-hook (lambda () (display-line-numbers-mode 0))))
 
-;; ;; Eshell prompt colors
-;; (defun my-eshell-prompt ()
-;;   "Highlight eshell pwd and prompt separately."
-;;   (mapconcat
-;;    (lambda (list)
-;;      (propertize (car list)
-;;                  'read-only      t
-;;                  'font-lock-face (cdr list)
-;;                  'front-sticky   '(font-lock-face read-only)
-;;                  'rear-nonsticky '(font-lock-face read-only)))
-;;    `((,(abbreviate-file-name (eshell/pwd)) :foreground "dodger blue")
-;;      (,(if (zerop (user-uid)) " # " " $ ") :foreground "orchid"))
-;;    ""))
-
-;; (setq eshell-highlight-prompt nil
-;;       eshell-prompt-function  #'my-eshell-prompt)
-
 ;; vterm instead of shell for project-compile
 (defun my-project-shell ()
   "Start an inferior shell in the current project's root directory.
@@ -445,77 +428,6 @@ if one already exists."
   (add-hook mode (lambda () (company-mode 0))))
 (setq company-dabbrev-downcase nil)
 
-;; Ivy
-(use-package ivy
-  :diminish
-  :init
-  (ivy-mode 1)
-  :custom
-  (ivy-use-virtual-buffers t)
-  (ivy-count-format "(%d/%d) " "Sets the format around the option counter in ivy, counsel, swiper.")  
-  )
-
-(use-package ivy-rich
-  :init
-  (ivy-rich-mode 1))
-
-(use-package counsel-tramp)
-
-;; nerd-icons
-(use-package nerd-icons)
-
-(use-package nerd-icons-dired
-  :hook
-  (dired-mode . nerd-icons-dired-mode))
-
-(use-package nerd-icons-ivy-rich
-  :ensure t
-  :init
-  (nerd-icons-ivy-rich-mode 1))
-
-(use-package ivy-posframe
-  :ensure t
-  :config (ivy-posframe-mode 1)
-  :custom (ivy-posframe-height-alist '((swiper . 20)
-									   (t      . 40)))
-  )
-
-;; LSP-Mode
-;; (use-package lsp-mode
-;;   :hook (lsp-mode . yas-minor-mode-on)
-;;   :defer (use-package lsp-ui))
-
-;; WARNING: Never add values to 'lsp-enabled-clients', rather add undesired clients to 'lsp-disabled-clients'.
-;; any clients not found in 'lsp-enabled-clients' will show an error message when trying to load them.
-;; (use-package lsp-mode
-;;   :init
-;;   ;; set prefix for lsp-command-keymap (few alternatives - "C-l", "C-c l")
-;;   (setq lsp-keymap-prefix "C-c l")
-;;   :hook (;; replace XXX-mode with concrete major-mode(e. g. python-mode)
-;;          ;(java-mode . lsp)
-;;          ;; if you want which-key integration
-;;          (lsp-mode . lsp-enable-which-key-integration))
-;;   :commands lsp
-;;   :config
-;;   (lsp-treemacs-sync-mode 1)
-;;   (defun lsp--clean-company ()
-;;     (remove-hook 'company-completion-started-hook
-;; 		 (lambda (&rest _)
-;;                    (lsp--capf-clear-cache)
-;;                    (setq-local lsp-inhibit-lsp-hooks t))
-;; 		 t)
-;;     (remove-hook 'company-after-completion-hook
-;; 		 (lambda (&rest _)
-;;                    (lsp--capf-clear-cache)
-;;                    (setq-local lsp-inhibit-lsp-hooks nil))
-;; 		 t)))
-;; (use-package lsp-ui)
-;; (setq lsp-ui-sideline-delay 0)
-;; ;(setq lsp-java-format-on-type-enabled nil) ;; to fix weird semicolon line deletion issue
-;; (setq lsp-enable-on-type-formatting nil)
-;; ;;(setq lsp-ui-sideline-show-code-actions t)
-
-
 ;; web-mode
 (use-package web-mode
   :defer t
@@ -563,32 +475,8 @@ if one already exists."
             ;; 3. Add 't' at the very end as a fallback
             (add-to-list 'eldoc-documentation-functions t t)))
 
-(use-package copilot
-  :ensure t
-  :bind (:map copilot-completion-map
-              ("TAB" . copilot-accept-completion)
-              ("<tab>" . copilot-accept-completion))
-  :config
-  ;; custom function to integrate copilot with normal tab behavior
-  (defun my/copilot-tab ()
-    (interactive)
-    (or (copilot-accept-completion)
-        (indent-for-tab-command)))
 
-  ;; globally bind tab in prog-mode buffers
-  (define-key copilot-mode-map (kbd "C-TAB") #'my/copilot-tab)
-  (define-key copilot-mode-map (kbd "C-<tab>") #'my/copilot-tab))
-
-;; (use-package yasnippet
-;;   :ensure t
-;;   :config
-;;   (use-package yasnippet-snippets
-;;     :ensure t)
-;;   ;(setq company-backends '((:separate company-yasnippet company-capf))
-;;   (global-set-key (kbd "<M-return>") 'yas-expand)
-;;   (yas-reload-all)
-;;   )
-
+;; Yasnippet
 (use-package yasnippet
   :hook (prog-mode . yas-minor-mode)
   :config
@@ -612,43 +500,14 @@ if one already exists."
 
 (use-package ssh-agency)
 
-;; IDE-type Config
-;; (use-package lsp-ivy :commands lsp-ivy-workspace-symbol)
-;; (use-package lsp-treemacs :commands lsp-treemacs-errors-list)
-
-;; (use-package lsp-java
-;;   :defer
-;;   :config
-;;   (add-hook 'java-mode-hook 'lsp))
-;(use-package dap-mode :after lsp-mode :config (dap-auto-configure-mode))
-;; (use-package dap-java
-;;   :defer
-;;   :ensure nil)
-;; (use-package java-snippets)
-;; (use-package lsp-python-ms
-;;   :ensure t
-;;   :init (setq lsp-python-ms-auto-install-server t)
-;;   :hook (python-mode . (lambda ()
-;;                           (require 'lsp-python-ms)
-;;                           (lsp))))
-;; (use-package lsp-jedi
-;;   :ensure t)
-;; (setq lsp-ui-doc-show-with-cursor nil)
-
-;; fic-mode for highlighting of TODO comments
-;; (use-package fic-mode)
-;; (add-hook 'nim-mode-hook 'fic-mode)
-
-;Which-key
+;; Which-key
 (use-package which-key
   :init (which-key-mode)
   :diminish which-key-mode
   :config
   (setq which-key-idle-delay 1.0))
 
-
 ;; Key Bindings
-
 (defun newline-without-break-of-line ()
   ;; Newline without breaking current line
   ;;  1. move to end of the line.
@@ -673,22 +532,6 @@ if one already exists."
 (global-set-key (kbd "S-C-<right>") 'enlarge-window-horizontally)
 (global-set-key (kbd "S-C-<down>") 'shrink-window)
 (global-set-key (kbd "S-C-<up>") 'enlarge-window)
-
-;: Ivy/Counsel/Swiper
-(global-set-key (kbd "C-s") 'swiper-isearch)
-(global-set-key (kbd "C-r") 'swiper-isearch-backward)
-(global-set-key (kbd "M-x") 'counsel-M-x)
-(global-set-key (kbd "C-x C-f") 'counsel-find-file)
-(global-set-key (kbd "M-y") 'counsel-yank-pop)
-(global-set-key (kbd "<f1> f") 'counsel-describe-function)
-(global-set-key (kbd "<f1> v") 'counsel-describe-variable)
-(global-set-key (kbd "<f1> l") 'counsel-find-library)
-(global-set-key (kbd "<f2> i") 'counsel-info-lookup-symbol)
-(global-set-key (kbd "<f2> u") 'counsel-unicode-char)
-(global-set-key (kbd "<f2> j") 'counsel-set-variable)
-(global-set-key (kbd "C-x b") 'ivy-switch-buffer)
-(global-set-key (kbd "C-c v") 'ivy-push-view)
-(global-set-key (kbd "C-c V") 'ivy-pop-view)
 
 ;: Expand Region
 (global-set-key (kbd "C-=") 'er/expand-region)
@@ -815,9 +658,9 @@ if one already exists."
    '(astro-ts-mode auto-package-update chatgpt-shell colorful-mode company-box
 				   company-quickhelp copilot counsel-tramp dockerfile-mode doom-modeline
 				   doom-themes eglot-booster ess expand-region flycheck-eglot flycheck-nim
-				   go-mode google-c-style ivy-posframe json-rpc just-mode just-ts-mode
+				   go-mode google-c-style json-rpc just-mode just-ts-mode
 				   leetcode ligature lsp-ui magit merlin move-dup nerd-icons-dired
-				   nerd-icons-ivy-rich nim-mode ob-nim ocaml-eglot ocp-indent org-modern
+				   nim-mode ob-nim ocaml-eglot ocp-indent org-modern
 				   org-web-tools ox-pandoc pandoc-mode pdf-tools plantuml-mode projectile
 				   rainbow-delimiters ssh-agency templ-ts-mode tuareg vterm web-mode
 				   which-key yasnippet-snippets))
