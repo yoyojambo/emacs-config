@@ -219,7 +219,45 @@
   :mode "\\.puml\\'"
   :config (setq plantuml-default-exec-mode 'jar))
 
+;; Org base directory
+(defvar my/org-directory (expand-file-name "~/org/")
+  "Root directory for my Org files.")
+
+(defvar my/org-inbox-file (expand-file-name "inbox.org" my/org-directory))
+(defvar my/org-tasks-file (expand-file-name "tasks.org" my/org-directory))
+(defvar my/org-archive-file (expand-file-name "archive.org" my/org-directory))
+(defvar my/org-docs-file (expand-file-name "docs/system.org" my/org-directory))
+(defvar my/org-journal-file (expand-file-name "journal/2026.org"
+                                              my/org-directory))
+
+;; Ensure directories exist
+(dolist (dir '("docs" "projects" "notes" "journal" "roam"
+               "roam/daily" "roam/literature" "roam/projects"
+               "roam/permanent"))
+  (make-directory (expand-file-name dir my/org-directory) t))
+
 ;; Org mode
+(use-package org
+  :ensure nil
+  :bind (("C-c o c" . org-capture)
+         ("C-c o a" . org-agenda)
+         ("C-c o l" . org-store-link))
+  :config
+  (setq org-directory my/org-directory
+        org-default-notes-file my/org-inbox-file
+        org-startup-indented t
+        org-hide-emphasis-markers t
+        org-pretty-entities t
+        org-return-follows-link t
+        org-use-fast-todo-selection t
+        org-enforce-todo-dependencies t
+        org-log-done 'time
+        org-log-into-drawer t
+        org-catch-invisible-edits 'smart
+        org-cycle-separator-lines 2
+        org-archive-location
+        (concat my/org-archive-file "::datetree/")))
+
 (add-hook 'org-mode-hook
 	  (lambda ()
 	    (org-indent-mode)
