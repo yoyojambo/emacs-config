@@ -161,7 +161,9 @@
      (typescript "https://github.com/tree-sitter/tree-sitter-typescript" "master" "typescript/src")
      (yaml "https://github.com/ikatyang/tree-sitter-yaml")
 	 (astro "https://github.com/virchau13/tree-sitter-astro")
-	 ))
+     (elixir "https://github.com/elixir-lang/tree-sitter-elixir")
+     (heex "https://github.com/phoenixframework/tree-sitter-heex")
+     ))
 
 (use-package astro-ts-mode
   :mode "\\.astro\\'")
@@ -213,6 +215,16 @@
 (add-hook 'tuareg-mode-hook
           (lambda ()
             (local-set-key (kbd "M-RET") 'my-tuareg-insert-match-pipe)))
+
+
+;; Elixir config
+(use-package elixir-ts-mode
+  :ensure t
+  :hook (elixir-ts-mode . eglot-ensure)
+  :mode (("\\.ex\\'" . elixir-ts-mode)
+          ("\\.exs\\'" . elixir-ts-mode)
+          ("\\.heex\\'" . heex-ts-mode))
+  )
 
 ;; Plantuml-mode
 (use-package plantuml-mode
@@ -466,6 +478,74 @@ if one already exists."
   (add-hook mode (lambda () (company-mode 0))))
 (setq company-dabbrev-downcase nil)
 
+;; Vertico stack
+(use-package vertico
+  :init
+  (vertico-mode)
+  :custom
+  (vertico-cycle t)
+  (vertico-count 12))
+
+(use-package orderless
+  :custom
+  (completion-styles '(orderless basic))
+  (completion-category-overrides '((file (styles basic partial-completion)))))
+
+(use-package marginalia
+  :init
+  (marginalia-mode)
+  :bind (:map minibuffer-local-map
+              ("M-A" . marginalia-cycle)))
+
+(use-package consult
+  :bind (;; Most important replacements
+         ("C-s"     . consult-line)
+         ("C-r"     . consult-line)           ; reuse C-r if you want
+         ("C-x b"   . consult-buffer)
+         ("C-x C-f" . find-file)              ; or consult-find if you prefer
+         ("M-x"     . execute-extended-command)
+         ("M-y"     . consult-yank-pop)
+         ("C-c o a" . consult-org-agenda)     ; if you want
+         ;; Optional but nice
+         ("C-x C-r" . consult-recent-file)
+         ("C-h a"   . consult-apropos))
+  :config
+  ;; Make consult-buffer nicer
+  (setq consult-buffer-sources
+        '(consult-source-buffer
+          consult-source-recent-file
+          consult-source-bookmark
+          consult-source-project-buffer
+          consult-source-project-recent-file)))
+
+;; Nerd Icons in completion
+(use-package nerd-icons-completion
+  :after marginalia
+  :config
+  (nerd-icons-completion-mode))
+
+;; Emabark
+(use-package embark
+  :bind
+  (("C-." . embark-act)         ; Most important key
+   ("C-;" . embark-dwim)        ; "Do What I Mean" (often smarter)
+   ("C-h B" . embark-bindings)) ; Show keybindings in current context
+
+  :init
+  ;; Optionally replace the key help popup with Embark
+  (setq prefix-help-command #'embark-prefix-help-command)
+
+  :config
+  ;; Hide the mode line when the Embark live indicator is on
+  (setq embark-mixed-indicator-delay 1.0))
+
+;; Make Consult + Embark play nicely together
+(use-package embark-consult
+  :after (embark consult)
+  :demand t
+  :hook
+  (embark-collect-mode . consult-preview-at-point-mode))
+
 ;; web-mode
 (use-package web-mode
   :defer t
@@ -482,6 +562,8 @@ if one already exists."
                                                (:typescript (:tsdk "./node_modules/typescript/lib")))))
   (add-to-list 'eglot-server-programs
                '(nim-mode . ("nimlsp")))
+  (add-to-list 'eglot-server-programs
+               '((elixir-mode elixir-ts-mode heex-ts-mode) . ("start_expert --stdio")))
   )
 
 ; Faster IO with a wrapper around the interaction with LSPs
